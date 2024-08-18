@@ -204,6 +204,7 @@ if __name__ == '__main__':
         version_info['feat'] = []
         version_info['update'] = []
         version_info['bug'] = []
+        version_info['comment'] = ""
         save_version_file(version_info)
         if use_bandi_zip:
             logger.info("BandiZip 开始压缩打包客户端")
