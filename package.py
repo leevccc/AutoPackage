@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import json
 import logging
@@ -149,6 +150,8 @@ def compare_and_copy_files(v_info):
 
     patch_path = os.path.join(package_path, patch_file_name)
     for root, dirs, files in os.walk(data_path):
+        if root == os.path.join(data_path, ".git"):
+            continue
         data_sub_path = os.path.relpath(root, data_path)
         package_sub_path = os.path.join(package_data_path, data_sub_path)
         patch_sub_path = os.path.join(patch_path, data_sub_path)
@@ -169,10 +172,20 @@ def compare_and_copy_files(v_info):
     return update_files > 1  # 不算更新日志的情况下
 
 
+def ignore_patterns(*patterns):
+    def _ignore(dirname, names):
+        ignored_names = []
+        for pattern in patterns:
+            ignored_names.extend(fnmatch.filter(names, pattern))
+        return set(ignored_names)
+
+    return _ignore
+
+
 def copy_all_client():
     if os.path.exists(package_data_path):
         shutil.rmtree(package_data_path)
-    shutil.copytree(data_path, package_data_path)
+    shutil.copytree(data_path, package_data_path, ignore=ignore_patterns(".git"))
 
 
 if __name__ == '__main__':
