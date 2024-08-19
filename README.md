@@ -3,44 +3,58 @@
 ## 使用方法
 **初始化**
 
-拷贝项目到本地
+1 拷贝项目到本地
 
 ```shell
-git clone 
+git clone https://github.com/leevccc/AutoPackage.git
 ```
 
-初始化 version.json 文件内容
-```json
-{
-  "version": "0.0.0",
-  "main": "GMSE",
-  "feat": [],
-  "update": [],
-  "bug": [],
-  "comment": "初始化客户端"
-}
-```
+2 在项目根目录下创建 `data` 和 `package` 两个文件夹
 
-在项目根目录下创建两个文件夹
-- data
-- package
+3 将客户端文件放入 data 目录
 
-将客户端文件放入 data 目录
+4 **复制** version.demo 文件为 version.json
 
-执行 package.py 即可
+5 编辑 version.json 参考下文
+
+6 编辑基本配置 参考下文
+
+7 执行 package.py 进行初始化打包
 
 **后续使用**
 
-客户端修改请在data目录下进行
+修改客户端，请在 `data` 目录下进行
 
-更改客户端时，将更改记录写入到version.json相应位置，
-打包时会根据version里的记录生成更新日志放在客户端中，并且会自动更新version版本号。
+更改客户端时，将更改记录写入到 `version.json` 相应位置，需要打包时，执行 package.py 即可
 
-版本号由 主版本.子版本.修复数 组成。
-- 填写main信息（留""视为未填），主版本+1；
-- 填写feat/update记录，子版本增加（记录数）
-- 填写bug记录，修复数增加（记录数）
+## 文件说明
+### version.json
 
-**注意**
+版本号由 主版本.子版本.修复数 组成，脚本会自动维护，如非必要请勿手动修改。
+- **main** 字符串，如不为""，打包时主版本+1；
+- **feat/update** 数组，可填写多条更新记录，打包时子版本+记录数
+- **bug** 数组，可填写多条修复记录，打包时修复数+记录数
+- **comment** 字符串，如为""，打包时，更新日志不会填写备注信息
 
-package目录里的data文件是用来比较文件是否发生变化用的，请勿删除或者修改，其他文件夹可自行删除。
+**请注意**
+
+如果 main/feat/update/bug 均无记录，则视为没有更新记录，不会进行打包。
+
+每次打包完成后，脚本会自动更新 version 并清空 main/feat/update/bug/comment 记录
+
+### data 目录
+须自行创建，存放及修改客户端均在此目录进行
+
+### package 目录
+须自行创建，存放输出文件
+
+package/data 存放上个版本的客户端文件，用来比较文件是否发生变化用的，请勿删除或者修改。**每次打包完成可自行压缩此文件夹进行发布**。
+
+package下的其他文件夹为补丁文件夹，可自行压缩发布及删除。 
+
+## 基本配置
+在 package.py 中，有三个变量需配置
+
+- `client_name` 客户端名称，仅开启压缩服务时有效
+- `use_bandi_zip` 压缩服务，打包后自动生成压缩包，仅安装了 BandZip 程序时可用，如果没有安装请设置为 **False**
+- `delete_patch_dir_after_zip` 压缩完成后自动删除补丁文件夹
