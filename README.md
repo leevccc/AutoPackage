@@ -58,3 +58,6 @@ package下的其他文件夹为补丁文件夹，可自行压缩发布及删除�
 - `client_name` 客户端名称，仅开启压缩服务时有效
 - `use_bandi_zip` 压缩服务，打包后自动生成压缩包，仅安装了 BandZip 程序时可用，如果没有安装请设置为 **False**
 - `delete_patch_dir_after_zip` 压缩完成后自动删除补丁文件夹
+
+## 文件过滤
+重命名filter.demo为filter.json，然后自行填写需要过滤的文件名，只支持文件。

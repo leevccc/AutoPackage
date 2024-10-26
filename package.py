@@ -8,7 +8,7 @@ import filecmp
 import shutil
 
 # 常用设置，自行配置
-client_name = "GMSE"
+client_name = "Cherry"
 use_bandi_zip = True
 delete_patch_dir_after_zip = True
 
@@ -21,6 +21,7 @@ update_log_path = os.path.join(data_path, '更新日志.txt')
 # 全局变量勿动
 old_version = "0.0.0"
 patch_file_name = ""
+filter_file_list = []
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # 设置日志级别
@@ -150,7 +151,7 @@ def compare_and_copy_files(v_info):
 
     patch_path = os.path.join(package_path, patch_file_name)
     for root, dirs, files in os.walk(data_path):
-        if root == os.path.join(data_path, ".git"):
+        if root.startswith(os.path.join(data_path, ".git")):
             continue
         data_sub_path = os.path.relpath(root, data_path)
         package_sub_path = os.path.join(package_data_path, data_sub_path)
@@ -159,6 +160,8 @@ def compare_and_copy_files(v_info):
         #     os.makedirs(patch_sub_path)
 
         for file in files:
+            if file in filter_file_list: # 文件过滤
+                continue
             data_file = os.path.join(root, file)
             package_file = os.path.join(package_sub_path, file)
             patch_file = os.path.join(patch_sub_path, file)
@@ -172,12 +175,12 @@ def compare_and_copy_files(v_info):
     return update_files > 1  # 不算更新日志的情况下
 
 
-def ignore_patterns(*patterns):
-    def _ignore(dirname, names):
-        ignored_names = []
+def ignore_patterns(patterns):
+    def _ignore(dirnames, filenames):
+        ignored_files = set()
         for pattern in patterns:
-            ignored_names.extend(fnmatch.filter(names, pattern))
-        return set(ignored_names)
+            ignored_files.update(fnmatch.filter(filenames, pattern))
+        return list(ignored_files)
 
     return _ignore
 
@@ -185,7 +188,13 @@ def ignore_patterns(*patterns):
 def copy_all_client():
     if os.path.exists(package_data_path):
         shutil.rmtree(package_data_path)
-    shutil.copytree(data_path, package_data_path, ignore=ignore_patterns(".git"))
+    shutil.copytree(data_path, package_data_path, ignore=ignore_patterns(filter_file_list))
+
+
+def load_filter_file_list():
+    global filter_file_list
+    with open(os.path.join(os.getcwd(), 'filter.json'), 'r', encoding='utf-8') as f:
+        filter_file_list = json.load(f)['fileName']
 
 
 if __name__ == '__main__':
@@ -193,6 +202,8 @@ if __name__ == '__main__':
     start_time = time.time()
     version_info = load_version_file()
     logger.info("上次打包版本：" + version_info['version'])
+
+    load_filter_file_list()
 
     if not check_dir():
         logger.error("请在脚本的根目录创建data和package文件夹，并将客户端文件放入data目录")
@@ -235,9 +246,13 @@ if __name__ == '__main__':
                     os.path.join(package_path, patch_file_name)
                 ))
                 logger.info(f"打包完成：{zip_path}")
-                if delete_patch_dir_after_zip:
-                    os.remove(os.path.join(package_path, patch_file_name))
-                    logger.info("移除补丁目录")
+                try:
+                    if delete_patch_dir_after_zip:
+                        os.remove(os.path.join(package_path, patch_file_name))
+                        logger.info("移除补丁目录")
+                except Exception as e:
+                    logger.error("删除补丁文件夹失败，请手动删除")
+                    logger.error(e)
 
     else:
         logger.warning("当前已是最新版本，没有补丁生成")
